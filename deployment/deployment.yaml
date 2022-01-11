@@ -65,10 +65,10 @@ spec:
 
           resources:
             limits:
-              cpu: "150"
+              cpu: "150m"
               memory: "200Mi"
             requests:
-              cpu: "150"
+              cpu: "150m"
               memory: "100Mi"
 
           #imagePullPolicy: 'Always'
