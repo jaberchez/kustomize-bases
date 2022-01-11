@@ -32,11 +32,11 @@ spec:
 
           envFrom:
             - secretRef:
-                name: secret-env
+                name: base-secret-env
                 optional: true
 
             - configMapRef:
-                name: configmap-env
+                name: base-configmap-env
                 optional: true
 
           livenessProbe:
