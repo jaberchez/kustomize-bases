@@ -1,0 +1,8 @@
+apiVersion: project.openshift.io/v1
+kind: Project
+metadata:
+  name: base-project
+  annotations:
+    openshift.io/description: "base-project"
+    openshift.io/display-name: "base-project"
+    argocd.argoproj.io/sync-wave: "-1"
