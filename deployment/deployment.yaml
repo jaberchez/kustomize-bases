@@ -39,6 +39,10 @@ spec:
                 name: base-configmap-env
                 optional: true
 
+          env:
+            - name: TZ
+              value: 'Europe/Madrid'
+
           livenessProbe:
             httpGet:
               path: /liveness
