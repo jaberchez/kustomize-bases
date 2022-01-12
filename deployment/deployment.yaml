@@ -37,6 +37,9 @@ spec:
               containerPort: 8080
 
           envFrom:
+            # Note: Keep secretRef as the first element of
+            # the array and configMapRef as the second in
+            # order to use the kustomize patches correctly
             - secretRef:
                 name: base-secret-env
                 optional: true
