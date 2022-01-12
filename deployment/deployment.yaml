@@ -21,6 +21,12 @@ spec:
     metadata:
       labels:
         app: base-app
+      annotations:
+        # Annotation indicating when config was changed
+        # Note: This annotation is required to force restart
+        #       pods when configuration changes
+        # Format: date +'%Y-%m-%d_%H-%M-%S-%N'
+        config-last-change: "2022-01-12_09-39-37-465931843"
     spec:
       containers:
         - name: base-image
