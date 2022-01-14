@@ -1,0 +1,25 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: restart-job
+  namespace: base-namespace
+rules:
+  - apiGroups: ["apps"]
+    resources: 
+      - "deployments"
+    resourceNames: ["deployment-name"]
+    verbs: ["get", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: restart-job
+  namespace: base-namespace
+subjects:
+  - kind: ServiceAccount
+    name: restart-job
+    namespace: base-namespace
+roleRef:
+  kind: Role 
+  name: restart-job
+  apiGroup: rbac.authorization.k8s.io

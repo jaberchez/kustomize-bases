@@ -1,0 +1,75 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: restart-deployment
+  namespace: base-namespace
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  template:
+    spec:
+      serviceAccountName: restart-job
+      automountServiceAccountToken: true
+
+      containers:
+        - name: restart-deployment
+          image: quay.io/jberchez-redhat/custom-utils:v3.1
+          command:
+            - /bin/bash
+            - -c
+            - |
+              fileToken="/var/run/secrets/kubernetes.io/serviceaccount/token"
+
+              if [[ ! -s "$fileToken" ]]; then
+                 echo "[ERROR] File token not found: \"$fileToken\""
+                 exit 1
+              fi
+
+              token=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+
+              res=$(oc --token=${token} get deploy -o name "${DEPLOYMENT_NAME}" -n "${NAMESPACE}" 2>&1)
+
+              if [[ $? -ne 0 ]]; then
+                 if [[ -n "$res" ]]; then
+                    echo "[ERROR] $res"
+                 else
+                    echo "[ERROR] Problems running oc get command"
+                 fi
+
+                 exit 1
+              fi
+
+              res=$(oc --token=${token} rollout restart deployment "${DEPLOYMENT_NAME}" -n "${NAMESPACE}" 2>&1)
+
+              if [[ $? -ne 0 ]]; then
+                 if [[ -n "$res" ]]; then
+                    echo "[ERROR] $res"
+                 else
+                    echo "[ERROR] Problems running oc rollout command"
+                 fi
+
+                 exit 1
+              fi
+
+              echo "[OK] Launched oc rollout restart"
+              exit 0
+          
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              memory: "150Mi"
+              cpu: "16m"
+            limits:
+              memory: "150Mi"
+              cpu: "32m"
+          env:
+            - name: DEPLOYMENT_NAME
+              value: base-deployment-name
+            - name: NAMESPACE
+              value: base-namespace
+
+      restartPolicy: Never
+  backoffLimit: 1
+    
