@@ -46,7 +46,7 @@ spec:
                      exit 1
                   fi
     
-                  echo "[OK] Launched oc rollout restart to Deployment \"${DEPLOYMENT_NAME}\""
+                  echo "[OK] Launched rollout restart to Deployment \"${DEPLOYMENT_NAME}\""
                   exit 0
                else
                   if [[ -n "$res" ]]; then
