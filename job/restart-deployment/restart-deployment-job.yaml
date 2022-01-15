@@ -20,41 +20,49 @@ spec:
             - /bin/bash
             - -c
             - |
-              fileToken="/var/run/secrets/kubernetes.io/serviceaccount/token"
+               fileToken="/var/run/secrets/kubernetes.io/serviceaccount/token"
+ 
+               if [[ ! -s "$fileToken" ]]; then
+                  echo "[ERROR] File token not found: \"$fileToken\""
+                  exit 1
+               fi
+ 
+               token=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+ 
+               res=$(oc --token=${token} get deploy -o name "${DEPLOYMENT_NAME}" -n "${NAMESPACE}" 2>&1)
+               ret=$?
+ 
+               if [[ $ret -eq 0 ]]; then
+                  res=$(oc --token=${token} rollout restart deployment "${DEPLOYMENT_NAME}" -n "${NAMESPACE}" 2>&1)
+                  ret=$?
+    
+                  if [[ $ret -ne 0 ]]; then
+                     if [[ -n "$res" ]]; then
+                        echo "[ERROR] $res"
+                     else
+                        echo "[ERROR] Problems running oc rollout command"
+                     fi
+    
+                     exit 1
+                  fi
+    
+                  echo "[OK] Launched oc rollout restart to Deployment \"${DEPLOYMENT_NAME}\""
+                  exit 0
+               else
+                  if [[ -n "$res" ]]; then
+                     if echo "$res" | grep -iq "not.*found"; then
+                        # Deployment not found, probably Configmap installed
+                        # before Deployment
+                        exit 0
+                     fi
 
-              if [[ ! -s "$fileToken" ]]; then
-                 echo "[ERROR] File token not found: \"$fileToken\""
-                 exit 1
-              fi
+                     echo "[ERROR] $res"
+                  else
+                     echo "[ERROR] Problems running oc get command"
+                  fi   
 
-              token=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
-
-              res=$(oc --token=${token} get deploy -o name "${DEPLOYMENT_NAME}" -n "${NAMESPACE}" 2>&1)
-
-              if [[ $? -ne 0 ]]; then
-                 if [[ -n "$res" ]]; then
-                    echo "[ERROR] $res"
-                 else
-                    echo "[ERROR] Problems running oc get command"
-                 fi
-
-                 exit 1
-              fi
-
-              res=$(oc --token=${token} rollout restart deployment "${DEPLOYMENT_NAME}" -n "${NAMESPACE}" 2>&1)
-
-              if [[ $? -ne 0 ]]; then
-                 if [[ -n "$res" ]]; then
-                    echo "[ERROR] $res"
-                 else
-                    echo "[ERROR] Problems running oc rollout command"
-                 fi
-
-                 exit 1
-              fi
-
-              echo "[OK] Launched oc rollout restart"
-              exit 0
+                  exit 1
+               fi
           
           imagePullPolicy: IfNotPresent
           resources:
